@@ -1,0 +1,79 @@
+---
+# tasks file for windows-node
+- name: Make sure Download directory is existing
+  win_file:
+    path: "%TEMP%\\kubernetes\\"
+    state: directory
+
+- name: Download the SIG Windows tools repository containing install and join scripts
+  win_get_url:
+    url: https://github.com/kubernetes-sigs/sig-windows-tools/archive/master.zip
+    dest: '%TEMP%\kubernetes\master.zip'
+    register: sig-windows-download
+
+- name: Download KB for windows 2019
+  win_get_url:
+    url: http://download.windowsupdate.com/c/msdownload/update/software/secu/2019/03/windows10.0-kb4489899-x64_c155ece4afbee219e7dfb83df67a7f2baf7c0d1d.msu
+    dest: "%TEMP%\\kubernetes\\KB4489899.msu"
+- name: Uninstall Windows-Defender
+  win_feature:
+    name:
+    - Windows-Defender
+    state: absent
+
+- name: Change system language to unicode
+  win_region:
+    unicode_language: en-US
+  register: language_result
+
+- name: Reboot windows node and wait
+  win_reboot:
+    reboot_timeout: 3600
+  when: language_result.restart_required
+
+- name: Install hotfix validating KB4489899
+  win_hotfix:
+    hotfix_kb: KB4489899
+    source: "%TEMP%\\kubernetes\\KB4489899.msu"
+    state: present
+  register: hotfix_install_4489889
+ 
+- name: Decompress sig windows tools
+  win_unzip:
+    src: '%TEMP%\kubernetes\master.zip'
+    dest: '%TEMP%\kubernetes\'
+
+- name: Generate kubeadm join token and ca bash
+  debug:
+    msg: "to be generate"
+
+- name: Assigen token to fact
+  debug:
+    msg: "to be assigen"
+
+- name: Assigen ca bash
+  debug:
+    msg: "to be assigen"
+
+#kubeadm join 192.168.1.205:6443 --token rdbyo5.f5xnri53cr57l767     --discovery-token-ca-cert-hash sha256:9a1b9f7b61bce2c202d22394f576d6725f7f881341e5f702e25cc3c9b54e09b1
+
+- name: Configure kube-flannel-cfg
+  win_template:
+    src: "Kubeclustervxlan.json.j2"
+    dest: "%TEMP%\\kubernetes\\sig-windows-tools-master\\kubeadm\\Kubeclustervxlan.json"
+
+#- name: Copy msft provider file to host
+#  win_copy:
+#    src: "dockermsftprovider.1.0.0.8.nupkg"
+#    dest: "%TEMP%\\kubernetes\\dockermsftprovider.1.0.0.8.nupkg"
+
+#- name: Cpoy nuget to host
+#  win_copy:
+#    src: nuget.exe
+#    dest: "%TEMP%\\kubernetes\\nuget.exe"
+
+- name: Install windows node for join into master
+  win_shell: "%TEMP%\\kubernetes\\sig-windows-tools-master\\kubeadm\\KubeCluster.ps1 -ConfigFile: %TEMP%\\kubernetes\\sig-windows-tools-master\\kubeadm\\Kubeclustervxlan.json -install"
+
+- name: Join node into master
+  win_shell: "%TEMP%\\kubernetes\\sig-windows-tools-master\\kubeadm\\KubeCluster.ps1 -ConfigFile: %TEMP%\\kubernetes\\sig-windows-tools-master\\kubeadm\\Kubeclustervxlan.json -join"

@@ -1,0 +1,44 @@
+{
+"Cri" : {
+    "Name": "dockerd",
+    "Images" : {
+        "Pause" : "mcr.microsoft.com/k8s/core/pause:1.2.0",
+        "Nanoserver" : "mcr.microsoft.com/windows/nanoserver:1809",
+        "ServerCore" : "mcr.microsoft.com/windows/servercore:ltsc2019"
+    }
+},
+"Cni" : {
+    "Name" : "flannel",
+    "Source" : [{
+        "Name" : "flanneld",
+        "Url" : "http://106.14.23.0:8083/files/flannel/releases/download/v0.11.0/flanneld.exe"
+        }
+    ],
+    "Plugin" : {
+        "Name": "bridge"
+    },
+    "InterfaceName" : "Ethernet"
+},
+"Kubernetes" : {
+    "Source" : {
+        "Release" : "1.16.3",
+        "Url" : "http://106.14.23.0:8083/files/kubernetes-windows/v1.16.3/kubernetes-node-windows-amd64.tar.gz"
+    },
+    "ControlPlane" : {
+        "IpAddress" : "192.168.1.205",
+        "Username" : "root",
+        "KubeadmToken" : "szbdan.9v9an9mbeuc64t7w",
+        "KubeadmCAHash" : "sha256:9a1b9f7b61bce2c202d22394f576d6725f7f881341e5f702e25cc3c9b54e09b1"
+    },
+    "KubeProxy" : {
+        "Gates" : "WinOverlay=true"
+    },
+    "Network" : {
+        "ServiceCidr" : "10.233.0.0/18",
+        "ClusterCidr" : "10.233.64.0/18"
+    }
+},
+"Install" : {
+    "Destination" : "C:\\ProgramData\\Kubernetes"
+}
+}
